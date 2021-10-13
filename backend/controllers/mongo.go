@@ -127,7 +127,6 @@ func (mc MongoController) InitializeDatabase() {
 func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 	page := 1
-	pg := p.ByName("page")
 	_ , _ = fmt.Sscan(p.ByName("page"), &page)
 	if page < 1 {
 		page = 1
@@ -138,6 +137,9 @@ func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p ht
 	skipCount := (page - 1) * 5
 
 	var orders []models.Order
+	var customer models.Customer
+	var company models.Company
+	var finalOrders []models.MongoOrder
 
 	err := mc.session.DB("test-db").C("Orders").Find(nil).Limit(5).Skip(skipCount).All(&orders)
 	if err != nil {
@@ -146,7 +148,35 @@ func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p ht
 		return
 	}
 
-	oj, err := json.Marshal(orders)
+	for _, order := range orders {
+		m := models.MongoOrder{}
+		m.OrderId = order.OrderId
+		m.OrderName = order.OrderName
+		m.OrderDate = order.CreatedAt
+
+		err := mc.session.DB("test-db").C("Customers").Find(bson.M{"user-id": order.CustomerId}).One(&customer)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Println(err)
+			return
+		}
+
+		m.CustomerName = customer.Name
+
+		err = mc.session.DB("test-db").C("Companies").Find(bson.M{"com-id": customer.CompanyId}).One(&company)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Println(err)
+			return
+		}
+
+		m.CompanyName = company.CompanyName
+
+		finalOrders = append(finalOrders, m)
+	}
+
+
+	oj, err := json.Marshal(finalOrders)
 	if err != nil {
 		log.Fatal(err)
 	}

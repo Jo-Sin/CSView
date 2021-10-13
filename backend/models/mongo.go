@@ -30,4 +30,12 @@ type (
 		CompanyId		int				`json:"com-id" bson:"com-id"`
 		CompanyName		string			`json:"com-name" bson:"com-name"`
 	}
+
+	MongoOrder struct {
+		OrderId			int				`json:"order-id"`
+		OrderName		string			`json:"order-name"`
+		CompanyName		string			`json:"com-name"`
+		CustomerName	string			`json:"cust-name"`
+		OrderDate		time.Time		`json:"order-date"`
+	}
 )
