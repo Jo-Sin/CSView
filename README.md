@@ -10,6 +10,9 @@
 ## STEPS
 
 1. Start MongoDB Server
-    * If you have modified your MongoDB configuration, please change the connection string in **main.go** on line 26
+
+2. Start PostgreSQL Server
+
+3. If necessary, change the connection string in the function **getMongoSession()** and the connection parameters in the function **getPostgresSession()** in **main.go**
 
 2. Run Go Server with `go run main.go`
