@@ -24,6 +24,13 @@ var mongoFiles = [3]string {
 	"backend/data/Test task - Mongo - customer_companies.csv",
 }
 
+// Set unrealistic initial dates that will be overriden by data
+var minDate, _ = time.Parse("2006-01-02", "4000-12-12")
+var maxDate, _ = time.Parse("2006-01-02", "1000-01-01")
+
+
+
+
 type MongoController struct {
 	session *mgo.Session
 }
@@ -40,7 +47,7 @@ func GetMongoController(session *mgo.Session) *MongoController {
 func (mc MongoController) InitializeDatabase() {
 	// Clear any existing data in the database
 	mc.session.DB("test-db").DropDatabase()
-	
+
 
 	f, err := os.Open(mongoFiles[0])
 	if err != nil {
@@ -73,8 +80,18 @@ func (mc MongoController) InitializeDatabase() {
 		o.CustomerId = record[3]
 		
 		mc.session.DB("test-db").C("Orders").Insert(o)
-		mcount = mcount + 1		// Count the number of orders in the database
+
+		// Count the number of orders in the database
+		mcount = mcount + 1
+		// Check and set date range
+		if minDate.After(dt) {
+			minDate = dt
+		}
+		if maxDate.Before(dt) {
+			maxDate = dt
+		}
 	}
+
 
 	//Divide order count by 5 to get page count
 	mcount = int(math.Ceil(float64(mcount)/5))
@@ -218,7 +235,12 @@ func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p ht
 // Sends page count for pagination in UI
 //
 func GetCount(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	oj, err := json.Marshal(mcount)
+	initInfo := models.InitData{}
+	initInfo.PageCount = mcount
+	initInfo.MinDate = minDate
+	initInfo.MaxDate = maxDate
+
+	oj, err := json.Marshal(initInfo)
 	if err != nil {
 		log.Fatal(err)
 	}

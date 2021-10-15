@@ -89,8 +89,9 @@ func InitializeDataPostgres() {
 		dtime = dtime[:len(dtime)-1]
 		dt, _ := time.Parse(layout, dtime)
 
+
 		_ , _ = fmt.Sscan(record[0], &o.OrderId)
-		o.CreatedAt = dt
+		o.OrderDate = dt
 		o.OrderName = record[2]
 		o.CustomerId = record[3]
 

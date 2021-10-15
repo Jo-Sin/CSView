@@ -38,4 +38,10 @@ type (
 		CustomerName	string			`json:"cust-name"`
 		OrderDate		time.Time		`json:"order-date"`
 	}
+
+	InitData struct {
+		PageCount	int			`json:"page-count"`
+		MinDate		time.Time	`json:"min-date"`
+		MaxDate		time.Time	`json:"max-date"`
+	}
 )

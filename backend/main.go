@@ -5,6 +5,7 @@ import (
 	"github.com/Jo-Sin/CSView/backend/controllers"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -22,7 +23,10 @@ func main() {
 	router.GET("/post-orders/:page", controllers.GetPostOrders)
 
 	// Run server to listen for API requests from front-end
-	http.ListenAndServe("localhost:8080", router)
+	// http.ListenAndServe("localhost:8000", router)
+	handler := cors.Default().Handler(router)
+
+	http.ListenAndServe("localhost:8000", handler)
 
 
 	// Close DB on exit
