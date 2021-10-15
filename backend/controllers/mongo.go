@@ -11,7 +11,7 @@ import(
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
-	"strings"
+	_ "strings"
 	"time"
 	"math"
 	"github.com/Jo-Sin/CSView/backend/models"
@@ -68,10 +68,8 @@ func (mc MongoController) InitializeDatabase() {
 			return
 		}
 
-		layout := "2006-01-02 15:04:05"
-		dtime := strings.Replace(record[1], "T", " ", 1)
-		dtime = dtime[:len(dtime)-1]
-		dt, _ := time.Parse(layout, dtime)
+		layout := "2006-01-02T15:04:05Z"
+		dt, _ := time.Parse(layout, record[1])
 
 		o.Id = bson.NewObjectId()
 		_ , _ = fmt.Sscan(record[0], &o.OrderId)
@@ -164,8 +162,15 @@ func (mc MongoController) InitializeDatabase() {
 //
 func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
-	//Validates page number, defaults to 1
+	//Get params and format for the query
 	page := 1
+	src := p.ByName("src")[1:]
+	fromdate, _ := time.Parse("2006-01-02",p.ByName("lodate"))
+	todate, _ := time.Parse("2006-01-02",p.ByName("hidate"))
+	todate = todate.AddDate(0,0,1)
+	fromdate = fromdate.Add(-time.Minute * 750)
+	todate = todate.Add(-time.Minute * 750)
+
 	_ , _ = fmt.Sscan(p.ByName("page"), &page)
 	if page < 1 {
 		page = 1
@@ -180,9 +185,18 @@ func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p ht
 	var company models.Company
 	var finalOrders []models.MongoOrder
 
+
+	queryVar := mc.session.DB("test-db").C("Orders").Find(bson.M{
+		"order-name": bson.RegEx{Pattern: src},
+		"order-date": bson.M{"$gt":fromdate, "$lt":todate},
+		})
+
+	//Update page count according to query params
+	mcount, _ = queryVar.Count()
+	mcount = int(math.Ceil(float64(mcount)/5))
 	
-	//Retrieve upto 5 orders according to page
-	err := mc.session.DB("test-db").C("Orders").Find(nil).Limit(5).Skip(skipCount).All(&orders)
+	//Retrieve upto 5 orders according to query params
+	err := queryVar.Limit(5).Skip(skipCount).All(&orders)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Println(err)
@@ -232,7 +246,7 @@ func (mc MongoController) GetOrders(w http.ResponseWriter, r *http.Request, p ht
 
 
 
-// Sends page count for pagination in UI
+// Sends page count and dates for initialization and updates to frontend
 //
 func GetCount(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	initInfo := models.InitData{}

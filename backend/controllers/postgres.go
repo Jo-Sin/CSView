@@ -161,8 +161,15 @@ func InitializeDataPostgres() {
 // On API request, this function returns 5 orders in JSON
 //
 func GetPostOrders(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	//Validates page number, defaults to 1
+	//Get params and format for the query
 	page := 1
+	src := p.ByName("src")[1:]
+	src = "%"+src+"%"
+	fromdate, _ := time.Parse("2006-01-02",p.ByName("lodate"))
+	todate, _ := time.Parse("2006-01-02",p.ByName("hidate"))
+	todate = todate.AddDate(0,0,1)
+	fromdate = fromdate.Add(-time.Minute * 750)
+	todate = todate.Add(-time.Minute * 750)
 	_ , _ = fmt.Sscan(p.ByName("page"), &page)
 	if page < 1 {
 		page = 1
@@ -178,8 +185,8 @@ func GetPostOrders(w http.ResponseWriter, r *http.Request, p httprouter.Params) 
 	var dels []models.Delivery
 	var finalOrders []models.PostOrder
 
-	//Retrieve upto 5 orders according to page
-	db.Limit(5).Offset(skipCount).Find(&orders)
+	//Retrieve upto 5 orders according to query params
+	db.Where("order_name LIKE ? AND order_date >= ? AND order_date <= ?", src,fromdate,todate).Limit(5).Offset(skipCount).Find(&orders)
 
 	for _, order := range orders {
 		p := models.PostOrder{}

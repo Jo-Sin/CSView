@@ -18,4 +18,9 @@
 
 4. Run Go Server with `go run backend/main.go`
 
-5. Run Vue3 Server with `cd frontend` and `npm run serve`
+5. Run Vue3 Server
+    * `cd frontend`
+    * `npm install`
+    * `npm run serve`
+
+6. Go to 'http://localhost:8080/orders'

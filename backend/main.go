@@ -18,9 +18,9 @@ func main() {
 	
 
 	// Set API paths and associated functions
-	router.GET("/mongo-orders/:page", mc.GetOrders)
+	router.GET("/mongo-orders/:page/:src/:lodate/:hidate", mc.GetOrders)
 	router.GET("/count", controllers.GetCount)
-	router.GET("/post-orders/:page", controllers.GetPostOrders)
+	router.GET("/post-orders/:page/:src/:lodate/:hidate", controllers.GetPostOrders)
 
 	// Run server to listen for API requests from front-end
 	// http.ListenAndServe("localhost:8000", router)
